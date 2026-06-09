@@ -23,6 +23,7 @@ public class Customer {
     private String phone;
     private String address;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer loyaltyPoints = 0;
 

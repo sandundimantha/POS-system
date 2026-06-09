@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
+    private final FileStorageService fileStorageService;
 
     @Cacheable(value = "products")
     public List<ProductResponse> findAll() {
@@ -90,8 +92,23 @@ public class ProductService {
     }
 
     @CacheEvict(value = {"products", "lowStockProducts"}, allEntries = true)
+    public ProductResponse uploadImage(Long id, MultipartFile file) {
+        Product product = getOrThrow(id);
+        if (product.getImagePath() != null) {
+            fileStorageService.deleteFile(product.getImagePath());
+        }
+        String fileName = fileStorageService.storeFile(file);
+        product.setImagePath(fileName);
+        return toResponse(productRepository.save(product));
+    }
+
+    @CacheEvict(value = {"products", "lowStockProducts"}, allEntries = true)
     public void delete(Long id) {
-        productRepository.delete(getOrThrow(id));
+        Product product = getOrThrow(id);
+        if (product.getImagePath() != null) {
+            fileStorageService.deleteFile(product.getImagePath());
+        }
+        productRepository.delete(product);
     }
 
     public Product getOrThrow(Long id) {

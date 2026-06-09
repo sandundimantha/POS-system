@@ -28,9 +28,11 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer stockQuantity = 0;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer minStockThreshold = 10;
 
