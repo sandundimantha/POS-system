@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/shared/DashboardLayout';
+import PaymentDonutChart from '@/components/shared/PaymentDonutChart';
 import { orderService } from '@/services/order.service';
 import { Order } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -267,38 +268,22 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* Payment breakdown splits */}
           <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-md">
             <CardHeader>
               <CardTitle className="text-base font-semibold text-slate-200">Payment Channel Breakdown</CardTitle>
               <CardDescription className="text-xs text-slate-500">Sales volume by settlement method</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               {orders.length === 0 ? (
                 <p className="text-center text-xs text-slate-500 py-12">No data to split.</p>
               ) : (
-                ['CASH', 'CARD', 'MOBILE_PAY'].map((mode) => {
-                  const val = paymentBreakdown[mode] || 0;
-                  const pct = totalRevenue > 0 ? (val / totalRevenue) * 100 : 0;
-                  
-                  return (
-                    <div key={mode} className="space-y-2 text-xs">
-                      <div className="flex justify-between items-center text-slate-300">
-                        <span className="font-semibold flex items-center gap-1.5 uppercase">
-                          <CreditCard className="h-4 w-4 text-violet-400" />
-                          {mode.replace('_', ' ')}
-                        </span>
-                        <span>{formatCurrency(val)} ({pct.toFixed(1)}%)</span>
-                      </div>
-                      <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-violet-600 to-indigo-600 transition-all duration-500" 
-                          style={{ width: `${pct}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })
+                <PaymentDonutChart
+                  data={{
+                    CASH: paymentBreakdown['CASH'] || 0,
+                    CARD: paymentBreakdown['CARD'] || 0,
+                    MOBILE_PAY: paymentBreakdown['MOBILE_PAY'] || 0,
+                  }}
+                />
               )}
             </CardContent>
           </Card>

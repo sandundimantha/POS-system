@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/shared/DashboardLayout';
+import SalesChart from '@/components/shared/SalesChart';
 import { reportService } from '@/services/report.service';
 import { productService } from '@/services/product.service';
 import { orderService } from '@/services/order.service';
@@ -27,6 +28,7 @@ export default function DashboardPage() {
   const [topProducts, setTopProducts] = useState<TopProductReport[]>([]);
   const [lowStock, setLowStock] = useState<Product[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [weeklySales, setWeeklySales] = useState<{ day: string; amount: number }[]>([]);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -57,6 +59,28 @@ export default function DashboardPage() {
         const allOrders = await orderService.getAll();
         // Take the 5 most recent
         setRecentOrders(allOrders.slice(-5).reverse());
+
+        // 6. Fetch weekly sales trend (last 7 days)
+        const tempWeekly: { day: string; amount: number }[] = [];
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dateStr = d.toISOString().split('T')[0];
+          try {
+            const report = await reportService.getDailySales(dateStr);
+            tempWeekly.push({
+              day: dayNames[d.getDay()],
+              amount: report?.totalRevenue ? Number(report.totalRevenue) : 0,
+            });
+          } catch (e) {
+            tempWeekly.push({
+              day: dayNames[d.getDay()],
+              amount: 0,
+            });
+          }
+        }
+        setWeeklySales(tempWeekly);
       } catch (error) {
         console.error("Failed to load dashboard statistics:", error);
       } finally {
@@ -190,6 +214,17 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Weekly Revenue Trend Chart */}
+        <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-md hover:border-slate-700/80 transition-all duration-300">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-slate-200">Revenue Trend Line</CardTitle>
+            <CardDescription className="text-slate-500">Weekly sales overview (last 7 days)</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[250px] w-full pb-4">
+            <SalesChart data={weeklySales} />
+          </CardContent>
+        </Card>
 
         {/* Analytical Panels */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
